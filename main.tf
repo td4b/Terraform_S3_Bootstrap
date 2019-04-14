@@ -64,7 +64,7 @@ locals {
 data "template_file" "userdata" {
   template = "${file("userdata.sh")}"
   vars = {
-    s3_url = "${local.s3_url}"
+    bucket_name = "${aws_s3_bucket.s3_osquery.bucket}"
     role = "${aws_iam_role.s3osqueryRole.arn}"
   }
 }
