@@ -41,7 +41,6 @@ EOF
 data "template_file" "s3_public_policy" {
   template = "${file("s3policy.json")}"
   vars {
-    key = "${var.binary}"
     bucket_name = "${var.bucket}"
     role = "${aws_iam_role.s3osqueryRole.arn}"
   }
@@ -69,6 +68,7 @@ locals {
 data "template_file" "userdata" {
   template = "${file("userdata.sh")}"
   vars = {
+    key = "${var.binary}"
     bucket_name = "${aws_s3_bucket.s3_osquery.bucket}"
     role = "${aws_iam_role.s3osqueryRole.arn}"
   }
