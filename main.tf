@@ -7,6 +7,10 @@ variable "bucket" {
   default = "s3uptycsosquery"
 }
 
+variable "binary" {
+  default = "install.sh"
+}
+
 variable "ami" {
   default = "ami-06397100adf427136"
 }
@@ -37,6 +41,7 @@ EOF
 data "template_file" "s3_public_policy" {
   template = "${file("s3policy.json")}"
   vars {
+    key = "${var.binary}"
     bucket_name = "${var.bucket}"
     role = "${aws_iam_role.s3osqueryRole.arn}"
   }
@@ -51,8 +56,8 @@ resource "aws_s3_bucket" "s3_osquery" {
 
 resource "aws_s3_bucket_object" "object" {
   bucket = "${aws_s3_bucket.s3_osquery.id}"
-  key    = "install.sh"
-  source = "install.sh"
+  key    = "${binary}"
+  source = "${binary}"
   etag = "${filemd5("install.sh")}"
 }
 
