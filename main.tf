@@ -1,3 +1,12 @@
+# Configure state file for our main tf script.
+terraform {
+  backend "s3" {
+    bucket = "osquerystatebucket"
+    key    = "osquerystatebucket/tfstate"
+    region = "us-west-1"
+  }
+}
+
 
 variable "region" {
   default = "us-west-1"
@@ -13,6 +22,11 @@ variable "binary" {
 
 variable "ami" {
   default = "ami-06397100adf427136"
+}
+
+# Logging bucket to set up.
+variable "logbucket" {
+  default = "tfosquerylogbucket"
 }
 
 provider "aws" {
@@ -50,13 +64,17 @@ resource "aws_s3_bucket" "s3_osquery" {
   bucket = "${var.bucket}"
   acl = "private"
   policy = "${data.template_file.s3_public_policy.rendered}"
+  logging {
+    target_bucket = "${var.logbucket}"
+    target_prefix = "log/"
+  }
 
 }
 
 resource "aws_s3_bucket_object" "object" {
   bucket = "${aws_s3_bucket.s3_osquery.id}"
-  key    = "${binary}"
-  source = "${binary}"
+  key    = "${var.binary}"
+  source = "${var.binary}"
   etag = "${filemd5("install.sh")}"
 }
 
@@ -86,6 +104,21 @@ resource "aws_security_group" "allow_ssh" {
     # Please restrict your ingress to only necessary IPs and ports.
     # Opening to 0.0.0.0/0 can lead to security vulnerabilities.
     cidr_blocks = ["73.223.93.219/32"]
+  }
+  ingress {
+    from_port = 8080
+    to_port = 8080
+    protocol = "TCP"
+    cidr_blocks = ["73.223.93.219/32"]
+  }
+
+  ingress {
+    # TLS (change to whatever ports you need)
+    from_port   = 80
+    to_port     = 80
+    protocol    = "TCP"
+    # Opens port 80 for the honey pot.
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
