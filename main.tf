@@ -103,13 +103,7 @@ resource "aws_security_group" "allow_ssh" {
     protocol    = "TCP"
     # Please restrict your ingress to only necessary IPs and ports.
     # Opening to 0.0.0.0/0 can lead to security vulnerabilities.
-    cidr_blocks = ["73.223.93.219/32"]
-  }
-  ingress {
-    from_port = 8080
-    to_port = 8080
-    protocol = "TCP"
-    cidr_blocks = ["73.223.93.219/32"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
