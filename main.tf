@@ -17,11 +17,12 @@ variable "bucket" {
 }
 
 variable "binary" {
-  default = "install.sh"
+  default = "k3s"
 }
 
 variable "ami" {
-  default = "ami-06397100adf427136"
+  default = "ami-06397100adf427136" # ubuntu
+  #default = "ami-04d9dff07d2aa02a3" # container Linux CoreOS
 }
 
 # Logging bucket to set up.
@@ -75,7 +76,7 @@ resource "aws_s3_bucket_object" "object" {
   bucket = "${aws_s3_bucket.s3_osquery.id}"
   key    = "${var.binary}"
   source = "${var.binary}"
-  etag = "${filemd5("install.sh")}"
+  #etag = "${filemd5("var.binary")}"
 }
 
 
