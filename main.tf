@@ -7,7 +7,6 @@ terraform {
   }
 }
 
-
 variable "region" {
   default = "us-west-1"
 }
@@ -16,8 +15,12 @@ variable "bucket" {
   default = "s3uptycsosquery"
 }
 
-variable "binary" {
+variable "binary_k3s" {
   default = "k3s"
+}
+
+variable "binary_osquery" {
+  default = "osquery.deb"
 }
 
 variable "ami" {
@@ -72,13 +75,17 @@ resource "aws_s3_bucket" "s3_osquery" {
 
 }
 
-resource "aws_s3_bucket_object" "object" {
+resource "aws_s3_bucket_object" "object_k3s" {
   bucket = "${aws_s3_bucket.s3_osquery.id}"
-  key    = "${var.binary}"
-  source = "${var.binary}"
-  #etag = "${filemd5("var.binary")}"
+  key    = "${var.binary_k3s}"
+  source = "${var.binary_k3s}"
 }
 
+resource "aws_s3_bucket_object" "object_osquery" {
+  bucket = "${aws_s3_bucket.s3_osquery.id}"
+  key    = "${var.binary_osquery}"
+  source = "${var.binary_osquery}"
+}
 
 locals {
   s3_url = "${aws_s3_bucket.s3_osquery.bucket}.s3-${var.region}.amazonaws.com"
@@ -87,7 +94,8 @@ locals {
 data "template_file" "userdata" {
   template = "${file("userdata.sh")}"
   vars = {
-    key = "${var.binary}"
+    k3s = "${var.binary_k3s}"
+    osquery = "${var.binary_osquery}"
     bucket_name = "${aws_s3_bucket.s3_osquery.bucket}"
     role = "${aws_iam_role.s3osqueryRole.arn}"
   }
