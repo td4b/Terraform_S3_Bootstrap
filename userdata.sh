@@ -8,9 +8,4 @@ chmod +x ${k3s} & chmod +x ${osquery}
 ./${k3s} server & sleep 30
 dpkg -i ${osquery}
 mv k3s /home/ubuntu
-cd /var/lib/rancher/k3s/server/manifests
-curl -LO https://k8s.io/examples/application/wordpress/mysql-deployment.yaml
-curl -LO https://k8s.io/examples/application/wordpress/wordpress-deployment.yaml
 cd /home/ubuntu
-./k3s kubectl create -f /var/lib/rancher/k3s/server/manifests/mysql-deployment.yaml
-./k3s kubectl create -f /var/lib/rancher/k3s/server/manifests/wordpress-deployment.yaml
