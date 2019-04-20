@@ -7,7 +7,7 @@ spec:
     app: python
   ports:
   - protocol: TCP
-    port: 80
+    NodePort: 80
     targetPort: 8080
 ---
 apiVersion: v1
@@ -34,7 +34,7 @@ spec:
     app: nodejs
   ports:
   - protocol: TCP
-    port: 8080
+    NodePort: 8080
     targetPort: 8080
 ---
 apiVersion: v1
@@ -61,7 +61,7 @@ spec:
     app: apache
   ports:
   - protocol: TCP
-    port: 8443
+    NodePort: 8443
     targetPort: 8080
 ---
 apiVersion: v1
