@@ -3,12 +3,11 @@ apiVersion: v1
 metadata:
   name: python-service
 spec:
+  type: LoadBalancer
+  ports:
+    - port: 8443
   selector:
     app: python
-  ports:
-  - protocol: TCP
-    NodePort: 80
-    targetPort: 8080
 ---
 apiVersion: v1
 kind: Pod
@@ -30,12 +29,11 @@ apiVersion: v1
 metadata:
   name: nodejs-service
 spec:
+  type: LoadBalancer
+  ports:
+    - port: 8000
   selector:
     app: nodejs
-  ports:
-  - protocol: TCP
-    NodePort: 8080
-    targetPort: 8080
 ---
 apiVersion: v1
 kind: Pod
@@ -57,12 +55,11 @@ apiVersion: v1
 metadata:
   name: apache-service
 spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
   selector:
     app: apache
-  ports:
-  - protocol: TCP
-    NodePort: 8443
-    targetPort: 8080
 ---
 apiVersion: v1
 kind: Pod
