@@ -8,11 +8,11 @@ provider "aws" {
 }
 
 variable "bucket" {
-  default = "osquerystatebucket"
+  default = "osquery-statebucket"
 }
 
 variable "logbucket" {
-  default = "tfosquerylogbucket"
+  default = "tfosquery-logbucket"
 }
 
 # this can be changed to the IAM Role in the policy file.

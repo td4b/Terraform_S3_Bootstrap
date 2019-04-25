@@ -1,19 +1,26 @@
 # Configure state file for our main tf script.
 terraform {
   backend "s3" {
-    bucket = "osquerystatebucket"
-    key    = "osquerystatebucket/tfstate"
+    bucket = "osquery-statebucket"
+    key    = "osquery-statebucket/tfstate"
     region = "us-west-1"
   }
 }
-
 
 variable "region" {
   default = "us-west-1"
 }
 
+variable "vpcid" {
+  default = "vpc-0dd1ac922930e40b2"
+}
+
+variable "subnet" {
+  default = "subnet-0603b49c9f38a102a"
+}
+
 variable "bucket" {
-  default = "s3uptycsosquery"
+  default = "s3uptycs-osquery"
 }
 
 variable "binary" {
@@ -26,7 +33,7 @@ variable "ami" {
 
 # Logging bucket to set up.
 variable "logbucket" {
-  default = "tfosquerylogbucket"
+  default = "tfosquery-logbucket"
 }
 
 provider "aws" {
@@ -68,7 +75,6 @@ resource "aws_s3_bucket" "s3_osquery" {
     target_bucket = "${var.logbucket}"
     target_prefix = "log/"
   }
-
 }
 
 resource "aws_s3_bucket_object" "object" {
@@ -77,7 +83,6 @@ resource "aws_s3_bucket_object" "object" {
   source = "${var.binary}"
   etag = "${filemd5("install.sh")}"
 }
-
 
 locals {
   s3_url = "${aws_s3_bucket.s3_osquery.bucket}.s3-${var.region}.amazonaws.com"
@@ -92,10 +97,31 @@ data "template_file" "userdata" {
   }
 }
 
+resource "aws_security_group" "cluster_comms" {
+  name        = "cluster_comms"
+  description = "Allow cluster traffic"
+  vpc_id = "${var.vpcid}"
+  ingress {
+    # TLS (change to whatever ports you need)
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    # Please restrict your ingress to only necessary IPs and ports.
+    # Opening to 0.0.0.0/0 can lead to security vulnerabilities.
+    self = true
+  }
+  egress {
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh"
   description = "Allow SSH inbound traffic"
-  vpc_id = "vpc-0dd1ac922930e40b2"
+  vpc_id = "${var.vpcid}"
   ingress {
     # TLS (change to whatever ports you need)
     from_port   = 22
@@ -129,18 +155,35 @@ resource "aws_iam_instance_profile" "osquery_profile" {
   role = "${aws_iam_role.s3osqueryRole.name}"
 }
 
-# automatically deploys to default vpc - 172.31.0.0/16
-resource "aws_spot_instance_request" "cheap_worker" {
+resource "aws_spot_instance_request" "master" {
   ami           = "${var.ami}"
-  spot_price    = "0.01"
-  instance_type = "t2.micro"
+  spot_price    = "0.036"
+  instance_type = "t2.large"
+  subnet_id = "${var.subnet}"
   key_name = "tewest"
   iam_instance_profile = "${aws_iam_instance_profile.osquery_profile.id}"
   associate_public_ip_address = true
-  vpc_security_group_ids = ["${aws_security_group.allow_ssh.id}"]
-  user_data = "${data.template_file.userdata.rendered}"
+  vpc_security_group_ids = ["${aws_security_group.allow_ssh.id}","${aws_security_group.cluster_comms.id}"]
+  #user_data = "${data.template_file.userdata.rendered}"
   tags = {
-    Name = "CheapWorker"
+    Name = "k8s.master"
+  }
+}
+
+# automatically deploys to default vpc - 172.31.0.0/16
+resource "aws_spot_instance_request" "node" {
+  count = 2
+  ami           = "${var.ami}"
+  spot_price    = "0.036"
+  instance_type = "t2.large"
+  subnet_id = "${var.subnet}"
+  key_name = "tewest"
+  iam_instance_profile = "${aws_iam_instance_profile.osquery_profile.id}"
+  associate_public_ip_address = true
+  vpc_security_group_ids = ["${aws_security_group.allow_ssh.id}","${aws_security_group.cluster_comms.id}"]
+  #user_data = "${data.template_file.userdata.rendered}"
+  tags = {
+    Name = "k8s.node.${count.index}"
   }
 }
 
